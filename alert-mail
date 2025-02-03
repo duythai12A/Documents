@@ -1,0 +1,73 @@
+{{- define "email.default.subject" -}}
+[{{ .Status | toUpper }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ .CommonLabels.Remove .GroupLabels.Names | join " " }}){{ end }}
+{{- end }}
+
+{{- define "email.default.html" -}}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .alert { border: 1px solid #e0e0e0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .alert.critical { background-color: #ffebee; border-color: #c62828; }
+        .alert.warning { background-color: #fff3e0; border-color: #f57c00; }
+        .alert.info { background-color: #e3f2fd; border-color: #1976d2; }
+        .label { font-weight: bold; }
+        .value { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h2>{{ .Status | toUpper }} Alert</h2>
+    <p>One or more alerts have been triggered:</p>
+
+    {{- if gt (len .GroupLabels.Values) 0 }}
+    <h3>Group Labels:</h3>
+    <ul>
+        {{- range .GroupLabels.SortedPairs }}
+        <li><span class="label">{{ .Name }}:</span> <span class="value">{{ .Value }}</span></li>
+        {{- end }}
+    </ul>
+    {{- end }}
+
+    {{- if gt (len .CommonLabels) (len .GroupLabels) }}
+    <h3>Common Labels:</h3>
+    <ul>
+        {{- range .CommonLabels.SortedPairs }}
+        <li><span class="label">{{ .Name }}:</span> <span class="value">{{ .Value }}</span></li>
+        {{- end }}
+    </ul>
+    {{- end }}
+
+    {{- if gt (len .CommonAnnotations) 0 }}
+    <h3>Common Annotations:</h3>
+    <ul>
+        {{- range .CommonAnnotations.SortedPairs }}
+        <li><span class="label">{{ .Name }}:</span> <span class="value">{{ .Value }}</span></li>
+        {{- end }}
+    </ul>
+    {{- end }}
+
+    {{- range .Alerts }}
+    <div class="alert {{ .Labels.severity }}">
+        <h3>Alert: {{ .Labels.alertname }}</h3>
+        {{- if .Labels.severity }}
+        <p><span class="label">Severity:</span> <span class="value"><strong>{{ .Labels.severity }}</strong></span></p>
+        {{- end }}
+        {{- if .Labels.cluster }}
+        <p><span class="label">Cluster:</span> <span class="value">{{ .Labels.cluster }}</span></p>
+        {{- end }}
+        {{- if .Annotations.summary }}
+        <p><span class="label">Summary:</span> <span class="value">{{ .Annotations.summary }}</span></p>
+        {{- end }}
+        {{- if .Annotations.description }}
+        <p><span class="label">Description:</span> <span class="value">{{ .Annotations.description }}</span></p>
+        {{- end }}
+    </div>
+    {{- end }}
+
+    {{- if .ExternalURL }}
+    <p><a href="{{ .ExternalURL }}">View in AlertManager</a></p>
+    {{- end }}
+</body>
+</html>
+{{- end }}
